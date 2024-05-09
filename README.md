@@ -1,6 +1,6 @@
 # UserInactiveOrActive-Handler Library
 
-A library for handling user activity status.
+A library for handling user activity status wheather Inactive or Active 
 
 ## Installation
 
