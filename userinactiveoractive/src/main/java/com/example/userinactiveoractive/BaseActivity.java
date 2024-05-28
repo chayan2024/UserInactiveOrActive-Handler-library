@@ -20,8 +20,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class BaseActivity extends AppCompatActivity {
 
-    private static final long INACTIVITY_DELAY = 10000; // 10 seconds for testing purposes
+    private static final long INACTIVITY_DELAY = 1000; // 10 seconds for testing purposes
     private Dialog mDialog;
+    private boolean isInactivityDetectionEnabled = false;
 
     private PopupWindow mPopupWindow;
     private Handler mHandler;
@@ -69,7 +70,11 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     protected void onUserInactive() {
-        showCustomDialog(this);
+        if (isInactivityDetectionEnabled){
+
+        }else{
+            showCustomDialog(this);
+        }
     }
 
     private void showCustomDialog(Activity activity) {
@@ -104,5 +109,13 @@ public class BaseActivity extends AppCompatActivity {
     public boolean dispatchTouchEvent(MotionEvent event) {
         resetHandler(); // Reset the handler on any touch event
         return super.dispatchTouchEvent(event);
+    }
+    protected void setInactivityDetectionEnabled(boolean enabled) {
+        isInactivityDetectionEnabled = enabled;
+        if (enabled) {
+            startHandler();
+        } else {
+            mHandler.removeCallbacks(mRunnable);
+        }
     }
 }
