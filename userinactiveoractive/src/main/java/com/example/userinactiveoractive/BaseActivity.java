@@ -2,6 +2,10 @@ package com.example.userinactiveoractive;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,13 +20,19 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class BaseActivity extends AppCompatActivity {
 
-    private static final long INACTIVITY_DELAY = 10000; // 2 seconds for testing purposes
+    private static final long INACTIVITY_DELAY = 10000; // 10 seconds for testing purposes
     private Dialog mDialog;
 
     private PopupWindow mPopupWindow;
     private Handler mHandler;
     private Runnable mRunnable;
-    private long mTime = 2000;
+
+    private BroadcastReceiver mUserActivityReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            resetHandler();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,18 +48,24 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        stopHandler();
-        startHandler();
-        return super.onTouchEvent(event);
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mUserActivityReceiver, new IntentFilter(Intent.ACTION_SCREEN_ON));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mUserActivityReceiver);
     }
 
     private void startHandler() {
         mHandler.postDelayed(mRunnable, INACTIVITY_DELAY);
     }
 
-    private void stopHandler() {
+    private void resetHandler() {
         mHandler.removeCallbacks(mRunnable);
+        mHandler.postDelayed(mRunnable, INACTIVITY_DELAY);
     }
 
     protected void onUserInactive() {
@@ -70,7 +86,6 @@ public class BaseActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 dismissCustomDialog();
-                startHandler();
             }
         });
 
@@ -78,9 +93,16 @@ public class BaseActivity extends AppCompatActivity {
         mDialog.show();
     }
 
-
     private void dismissCustomDialog() {
         if (mDialog != null && mDialog.isShowing()) {
-            mDialog.cancel();
+            mDialog.dismiss();
         }
-    }}
+        resetHandler(); // Reset the handler after dismissing the dialog
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        resetHandler(); // Reset the handler on any touch event
+        return super.dispatchTouchEvent(event);
+    }
+}
